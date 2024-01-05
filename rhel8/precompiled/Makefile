@@ -1,19 +1,22 @@
 DOCKERFILE = Dockerfile
 RHEL_VERSION ?= 8.6
-CUDA_VERSION ?= 12.1.0
+CUDA_VERSION ?= 12.3.1
 CUDA_DIST ?= ubi8
-DRIVER_VERSION ?= 525.105.17
-KERNEL_VERSION ?= 4.18.0-372.51.1.el8_6.x86_64
+DRIVER_VERSION ?= 545.23.06
+KERNEL_VERSION ?= 4.18.0-372.80.1.el8_6.x86_64
 TARGET_ARCH = $(shell echo "${KERNEL_VERSION}" | awk -F. '{print $$NF}')
-CONTAINER_TOOL ?= docker
-IMAGE_REGISTRY ?= nvcr.io/ea-cnt/nv_only
-BASE_URL ?= https://us.download.nvidia.com/tesla
+CONTAINER_TOOL ?= podman
+IMAGE_REGISTRY ?= ghcr.io/memverge
+BASE_URL ?= https://us.download.nvidia.com/XFree86/Linux-x86_64
 DRIVER_TYPE ?= passthrough
 ifeq ($(DRIVER_TYPE),vgpu)
 	IMAGE_NAME ?= vgpu-guest-driver
 else
-	IMAGE_NAME ?= driver
+	IMAGE_NAME ?= nvidia-gpu-driver
 endif
+OPENSHIFT_VERSION ?= 4.12.44
+OS_TAG ?= rhcos4.12
+DRIVER_EPOCH ?= 1
 
 BUILDER_USER ?= $(shell git config --get user.name)
 BUILDER_EMAIL ?= $(shell git config --get user.email)
@@ -21,6 +24,9 @@ BUILDER_EMAIL ?= $(shell git config --get user.email)
 # Red Hat subscription
 RHSM_ORG_FILE ?= ${HOME}/.rhsm_org
 RHSM_ACTIVATIONKEY_FILE ?= ${HOME}/.rhsm_activationkey
+PULL_SECRET_FILE ?= ${HOME}/.pull-secret.txt
+
+DRIVER_TOOLKIT_IMAGE ?= $(shell oc adm release info -a ${PULL_SECRET_FILE} --image-for=driver-toolkit quay.io/openshift-release-dev/ocp-release:${OPENSHIFT_VERSION}-${TARGET_ARCH})
 
 .PHONY: image image-push rhsm-register
 
